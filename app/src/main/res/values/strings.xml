@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">FocusLock</string>
+    <string name="accessibility_service_label">FocusLock Protection Service</string>
+    <string name="accessibility_service_description">Detects when blocked applications are launched to display the FocusLock break screen and enforce your schedules and usage limits.</string>
+</resources>

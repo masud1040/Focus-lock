@@ -1,0 +1,6 @@
+{
+  "name": "FocusLock",
+  "description": "Premium Android app blocker and digital wellbeing manager with intelligent schedule enforcement, daily usage limits, real-time countdown, PIN security, and tamper protection.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
