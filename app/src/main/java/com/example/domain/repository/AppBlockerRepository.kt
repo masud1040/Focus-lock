@@ -64,6 +64,7 @@ class AppBlockerRepository(
         }
         val resolveInfos = pm.queryIntentActivities(mainIntent, 0)
         val usageMap = UsageStatsHelper.getTodayUsagePerApp(context)
+        val monthlyUsageMap = UsageStatsHelper.getMonthlyUsagePerApp(context)
         val ourPackage = context.packageName
 
         // Distinct packages with launcher intent
@@ -89,6 +90,7 @@ class AppBlockerRepository(
                         isBlocked = dbApp?.isBlocked ?: false,
                         dailyLimitMinutes = dbApp?.dailyLimitMinutes ?: 0,
                         todayUsageMinutes = usageMap[pkg] ?: 0,
+                        monthlyUsageMinutes = monthlyUsageMap[pkg] ?: 0,
                         category = if (isSystem) "System" else "User Application"
                     )
                 )

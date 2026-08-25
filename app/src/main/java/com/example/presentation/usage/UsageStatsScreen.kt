@@ -2,6 +2,7 @@ package com.example.presentation.usage
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -67,11 +68,23 @@ fun UsageStatsScreen(
     totalScreenTimeMinutes: Int
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
+    var selectedPeriod by remember { mutableIntStateOf(0) } // 0 = Daily, 1 = Monthly
     val tabs = listOf("App Usage", "Deflected Attempts")
 
-    val usedApps = remember(installedApps) {
-        installedApps.filter { it.todayUsageMinutes > 0 || it.isBlocked || it.dailyLimitMinutes > 0 }
-            .sortedByDescending { it.todayUsageMinutes }
+    val totalMonthlyScreenTime = remember(installedApps) {
+        installedApps.sumOf { it.monthlyUsageMinutes }
+    }
+
+    val usedApps = remember(installedApps, selectedPeriod) {
+        installedApps.filter {
+            if (selectedPeriod == 0) {
+                it.todayUsageMinutes > 0 || it.isBlocked || it.dailyLimitMinutes > 0
+            } else {
+                it.monthlyUsageMinutes > 0 || it.isBlocked || it.dailyLimitMinutes > 0
+            }
+        }.sortedByDescending {
+            if (selectedPeriod == 0) it.todayUsageMinutes else it.monthlyUsageMinutes
+        }
     }
 
     Column(
@@ -91,14 +104,14 @@ fun UsageStatsScreen(
         )
         Spacer(modifier = Modifier.height(2.dp))
         Text(
-            text = "Track screen time, daily limits, and focus enforcement",
+            text = "Track daily and monthly app screen time & limits",
             fontSize = 13.sp,
             color = Zinc500
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Top Total Screen Time Banner
+        // Top Total Screen Time Banner (Daily & Monthly)
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -113,9 +126,9 @@ fun UsageStatsScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "TOTAL SCREEN TIME TODAY",
+                        text = "TODAY'S SCREEN TIME",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.SemiBold,
                         letterSpacing = 1.sp,
@@ -124,25 +137,33 @@ fun UsageStatsScreen(
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = formatTime(totalScreenTimeMinutes),
-                        fontSize = 28.sp,
+                        fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = CyanAccent
                     )
                 }
 
                 Box(
                     modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFF27272A).copy(alpha = 0.6f))
-                        .border(1.dp, MinimalBorder, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Timer,
-                        contentDescription = null,
-                        tint = CyanAccent,
-                        modifier = Modifier.size(22.dp)
+                        .height(36.dp)
+                        .width(1.dp)
+                        .background(MinimalBorderSubtle)
+                )
+
+                Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
+                    Text(
+                        text = "THIS MONTH'S TIME",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 1.sp,
+                        color = Zinc500
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = formatTime(totalMonthlyScreenTime),
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = VioletAccent
                     )
                 }
             }
@@ -182,9 +203,50 @@ fun UsageStatsScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
         if (selectedTab == 0) {
+            // Daily / Monthly period sub-filter toggle
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(if (selectedPeriod == 0) CyanAccent.copy(alpha = 0.15f) else Color(0xFF18181B))
+                        .border(1.dp, if (selectedPeriod == 0) CyanAccent else MinimalBorderSubtle, RoundedCornerShape(10.dp))
+                        .padding(horizontal = 14.dp, vertical = 6.dp)
+                        .clickable { selectedPeriod = 0 }
+                ) {
+                    Text(
+                        text = "Today (দৈনিক)",
+                        fontSize = 12.sp,
+                        fontWeight = if (selectedPeriod == 0) FontWeight.SemiBold else FontWeight.Normal,
+                        color = if (selectedPeriod == 0) CyanAccent else Zinc400
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(if (selectedPeriod == 1) VioletAccent.copy(alpha = 0.15f) else Color(0xFF18181B))
+                        .border(1.dp, if (selectedPeriod == 1) VioletAccent else MinimalBorderSubtle, RoundedCornerShape(10.dp))
+                        .padding(horizontal = 14.dp, vertical = 6.dp)
+                        .clickable { selectedPeriod = 1 }
+                ) {
+                    Text(
+                        text = "This Month (মাসিক)",
+                        fontSize = 12.sp,
+                        fontWeight = if (selectedPeriod == 1) FontWeight.SemiBold else FontWeight.Normal,
+                        color = if (selectedPeriod == 1) VioletAccent else Zinc400
+                    )
+                }
+            }
+
             // App-by-app usage list
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -198,12 +260,16 @@ fun UsageStatsScreen(
                                 .padding(40.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text("No application usage tracked today yet.", color = Zinc500, fontSize = 13.sp)
+                            Text(
+                                text = if (selectedPeriod == 0) "No application usage tracked today yet." else "No monthly application usage tracked yet.",
+                                color = Zinc500,
+                                fontSize = 13.sp
+                            )
                         }
                     }
                 } else {
                     items(usedApps, key = { it.packageName }) { app ->
-                        AppUsageItemCard(app = app)
+                        AppUsageItemCard(app = app, selectedPeriod = selectedPeriod)
                     }
                 }
                 item {
@@ -245,7 +311,7 @@ fun UsageStatsScreen(
 }
 
 @Composable
-fun AppUsageItemCard(app: InstalledApp) {
+fun AppUsageItemCard(app: InstalledApp, selectedPeriod: Int = 0) {
     val hasLimit = app.dailyLimitMinutes > 0
     val progress = if (hasLimit) {
         (app.todayUsageMinutes.toFloat() / app.dailyLimitMinutes.toFloat()).coerceIn(0f, 1f)
@@ -278,6 +344,7 @@ fun AppUsageItemCard(app: InstalledApp) {
                         fontWeight = FontWeight.Medium,
                         color = Color.White
                     )
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = if (hasLimit) "Daily Limit: ${app.dailyLimitMinutes}m" else if (app.isBlocked) "Locked by Schedule" else "Allowed",
                         fontSize = 11.sp,
@@ -285,12 +352,33 @@ fun AppUsageItemCard(app: InstalledApp) {
                     )
                 }
 
-                Text(
-                    text = "${app.todayUsageMinutes}m",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = if (isLimitExceeded) Color(0xFFF43F5E) else CyanAccent
-                )
+                Column(horizontalAlignment = Alignment.End) {
+                    if (selectedPeriod == 0) {
+                        Text(
+                            text = formatTime(app.todayUsageMinutes),
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (isLimitExceeded) Color(0xFFF43F5E) else CyanAccent
+                        )
+                        Text(
+                            text = "Month: ${formatTime(app.monthlyUsageMinutes)}",
+                            fontSize = 11.sp,
+                            color = Zinc400
+                        )
+                    } else {
+                        Text(
+                            text = formatTime(app.monthlyUsageMinutes),
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = VioletAccent
+                        )
+                        Text(
+                            text = "Today: ${formatTime(app.todayUsageMinutes)}",
+                            fontSize = 11.sp,
+                            color = Zinc400
+                        )
+                    }
+                }
             }
 
             if (hasLimit) {

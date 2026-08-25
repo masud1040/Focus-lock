@@ -10,6 +10,7 @@ data class InstalledApp(
     val isBlocked: Boolean = false,
     val dailyLimitMinutes: Int = 0,
     val todayUsageMinutes: Int = 0,
+    val monthlyUsageMinutes: Int = 0,
     val category: String = "App"
 )
 

@@ -64,6 +64,51 @@ object UsageStatsHelper {
     }
 
     /**
+     * Returns total foreground usage in minutes for each app in the current month (from 1st of month 00:00 to now).
+     */
+    fun getMonthlyUsagePerApp(context: Context): Map<String, Int> {
+        if (!hasUsageStatsPermission(context)) return emptyMap()
+
+        val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as? UsageStatsManager
+            ?: return emptyMap()
+
+        val cal = Calendar.getInstance().apply {
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val startTime = cal.timeInMillis
+        val endTime = System.currentTimeMillis()
+
+        val usageMap = mutableMapOf<String, Long>()
+        val statsList = usageStatsManager.queryUsageStats(
+            UsageStatsManager.INTERVAL_DAILY,
+            startTime,
+            endTime
+        )
+
+        if (statsList != null) {
+            for (stat in statsList) {
+                val existing = usageMap[stat.packageName] ?: 0L
+                usageMap[stat.packageName] = existing + stat.totalTimeInForeground
+            }
+        }
+
+        // Convert milliseconds to minutes
+        return usageMap.mapValues { (it.value / (1000 * 60)).toInt() }
+    }
+
+    /**
+     * Calculates total screen time (in minutes) across all apps in the current month.
+     */
+    fun getTotalMonthlyScreenTimeMinutes(context: Context): Int {
+        val usageMap = getMonthlyUsagePerApp(context)
+        return usageMap.values.sum()
+    }
+
+    /**
      * Calculates past 7 days usage in minutes.
      */
     fun getWeeklyUsageBreakdown(context: Context): List<Pair<String, Int>> {
