@@ -28,7 +28,10 @@ import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
+import android.widget.Toast
+import androidx.compose.material.icons.filled.Launch
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -411,6 +414,8 @@ fun AppItemCard(
     onToggle: (Boolean) -> Unit,
     onConfigureLimit: () -> Unit
 ) {
+    val context = LocalContext.current
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -465,6 +470,26 @@ fun AppItemCard(
                 }
             }
 
+            // Launch App Button
+            IconButton(
+                onClick = {
+                    val launchIntent = context.packageManager.getLaunchIntentForPackage(app.packageName)
+                    if (launchIntent != null) {
+                        context.startActivity(launchIntent)
+                    } else {
+                        Toast.makeText(context, "${app.appName} সরাসরি ওপেন করা সম্ভব নয়", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Launch,
+                    contentDescription = "Open App Directly",
+                    tint = CyanAccent,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
             // Quick Limit configuration icon
             IconButton(
                 onClick = onConfigureLimit,
@@ -478,7 +503,7 @@ fun AppItemCard(
                 )
             }
 
-            Spacer(modifier = Modifier.width(4.dp))
+            Spacer(modifier = Modifier.width(2.dp))
 
             // Toggle Switch
             Switch(

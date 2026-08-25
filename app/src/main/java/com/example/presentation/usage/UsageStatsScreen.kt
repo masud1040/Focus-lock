@@ -46,6 +46,11 @@ import androidx.compose.ui.unit.sp
 import com.example.data.database.BlockedAttemptLogEntity
 import com.example.domain.model.InstalledApp
 import com.example.presentation.apps.AppIconRenderer
+import android.widget.Toast
+import androidx.compose.material.icons.filled.Launch
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.platform.LocalContext
+import com.example.presentation.components.RechartsBarChart
 import com.example.ui.theme.CyanAccent
 import com.example.ui.theme.EmeraldSuccess
 import com.example.ui.theme.MinimalBorder
@@ -247,17 +252,22 @@ fun UsageStatsScreen(
                 }
             }
 
-            // App-by-app usage list
+            // App-by-app usage list with 7-Day Recharts Bar Chart
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                item {
+                    RechartsBarChart(weeklyUsage = weeklyUsage)
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+
                 if (usedApps.isEmpty()) {
                     item {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(40.dp),
+                                .padding(30.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
@@ -312,6 +322,7 @@ fun UsageStatsScreen(
 
 @Composable
 fun AppUsageItemCard(app: InstalledApp, selectedPeriod: Int = 0) {
+    val context = LocalContext.current
     val hasLimit = app.dailyLimitMinutes > 0
     val progress = if (hasLimit) {
         (app.todayUsageMinutes.toFloat() / app.dailyLimitMinutes.toFloat()).coerceIn(0f, 1f)
@@ -351,6 +362,27 @@ fun AppUsageItemCard(app: InstalledApp, selectedPeriod: Int = 0) {
                         color = if (isLimitExceeded) Color(0xFFF43F5E) else Zinc400
                     )
                 }
+
+                IconButton(
+                    onClick = {
+                        val launchIntent = context.packageManager.getLaunchIntentForPackage(app.packageName)
+                        if (launchIntent != null) {
+                            context.startActivity(launchIntent)
+                        } else {
+                            Toast.makeText(context, "${app.appName} সরাসরি ওপেন করা সম্ভব নয়", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Launch,
+                        contentDescription = "Open App Directly",
+                        tint = CyanAccent,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(4.dp))
 
                 Column(horizontalAlignment = Alignment.End) {
                     if (selectedPeriod == 0) {

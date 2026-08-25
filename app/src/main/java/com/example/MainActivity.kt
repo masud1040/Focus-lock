@@ -54,6 +54,15 @@ import androidx.compose.ui.unit.sp
 import com.example.data.datastore.ThemeMode
 import com.example.presentation.FocusLockViewModel
 import com.example.presentation.apps.AppsScreen
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.painterResource
+import com.example.presentation.components.FirstTimeGuideOverlay
 import com.example.presentation.components.PinPromptDialog
 import com.example.presentation.dashboard.DashboardScreen
 import com.example.presentation.onboarding.OnboardingScreen
@@ -108,6 +117,50 @@ fun FocusLockApp(
         OnboardingScreen(
             onComplete = { viewModel.completeOnboarding() }
         )
+        return
+    }
+
+    var showInitialLoading by remember { mutableStateOf(true) }
+    var showQuickGuide by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(1000)
+        showInitialLoading = false
+        showQuickGuide = true
+    }
+
+    if (showInitialLoading) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFF09090B)),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Image(
+                    painter = painterResource(id = R.drawable.focus_lock_icon_1787572031797),
+                    contentDescription = "Logo",
+                    modifier = Modifier
+                        .size(72.dp)
+                        .clip(CircleShape)
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+                CircularProgressIndicator(color = CyanAccent, modifier = Modifier.size(32.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "FocusLock লোড হচ্ছে...",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.White
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "ইনস্টলড অ্যাপস ও ব্যবহারের পরিসংখ্যান প্রস্তুত করা হচ্ছে",
+                    fontSize = 12.sp,
+                    color = Color(0xFF71717A)
+                )
+            }
+        }
         return
     }
 
@@ -277,6 +330,12 @@ fun FocusLockApp(
                 pendingActionAfterPin = null
                 action()
             }
+        )
+    }
+
+    if (showQuickGuide) {
+        FirstTimeGuideOverlay(
+            onDismissOrSkip = { showQuickGuide = false }
         )
     }
 }
